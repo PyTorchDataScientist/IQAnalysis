@@ -1,0 +1,62 @@
+version: "2"
+
+services:
+  spark-master:
+    image: bde2020/spark-master:3.3.0-hadoop3.3
+    hostname: master
+    container_name: spark-master
+    restart: always
+    networks:
+      - bridger
+    ports:
+      - "8080:8080"
+    environment:
+      - CLUSTER_NAME=my-spark-cluster
+      - ENABLE_INIT_DAEMON=true
+      - INIT_DAEMON_BASE_URI=http://master:8080
+      - INIT_DAEMON_STEP=setup_spark
+  spark-worker:
+    image: bde2020/spark-worker:3.3.0-hadoop3.3
+    hostname: worker
+    container_name: spark-worker
+    restart: always
+    networks:
+      - bridger
+   #   depends_on:
+    #    - spark-master
+     # ports:
+     #   - "8081:8081"
+    environment:
+      - CLUSTER_NAME=my-spark-cluster
+      - SPARK_MASTER=spark://spark-master:7077
+      - ENABLE_INIT_DAEMON=true
+      - INIT_DAEMON_BASE_URI=http://master:8080
+      - INIT_DAEMON_STEP=setup_spark
+  jupyter:
+    image: jupyter/all-spark-notebook
+    hostname: jupyter
+    container_name: jupyter
+    restart: always
+    networks:
+      - bridger
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - GRANT_SUDO=yes
+      - NB_UID=1000
+      - NB_GID=100
+      - HADOOP_CONF_DIR=/usr/local/hadoop/etc/hadoop
+      - SPARK_HOME=/usr/local/spark
+    env_file:
+      - ./hadoop.env
+    ports:
+      - 8888:8888
+
+volumes:
+  hadoop_namenode:
+  hadoop_datanode1:
+  hadoop_datanode2:
+  hadoop_datanode3:
+  hadoop_historyserver:
+networks:
+  bridger:
+    driver: bridge
